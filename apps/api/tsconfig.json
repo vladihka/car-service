@@ -8,6 +8,6 @@
       "@/*": ["./*"]
     }
   },
-  "include": ["src/**/*", "seeds/**/*"],
+  "include": ["src/**/*", "src/seeds/**/*"],
   "exclude": ["node_modules", "dist"]
 }

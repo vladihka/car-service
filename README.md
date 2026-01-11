@@ -13,9 +13,6 @@ car-service/
 │   └── admin/        # Next.js Admin Panel
 ├── packages/
 │   └── shared/       # Shared types, utils, auth
-├── docker/
-│   └── Dockerfiles
-├── docker-compose.yml
 └── README.md
 ```
 
@@ -36,9 +33,7 @@ car-service/
 - Tailwind CSS
 
 **Infrastructure:**
-- Docker & Docker Compose
-- MongoDB
-- Redis (planned)
+- MongoDB Atlas (cloud database)
 
 ### Multi-Tenancy Model
 
@@ -69,7 +64,7 @@ Platform (SuperAdmin)
 ### Prerequisites
 
 - Node.js 18+ and npm 9+
-- Docker Desktop (Windows)
+- MongoDB Atlas account (free tier available)
 - Git
 
 ### Windows Setup
@@ -85,36 +80,61 @@ Platform (SuperAdmin)
    npm install
    ```
 
-3. **Set up environment variables**
+3. **Set up MongoDB Atlas**
    
-   Copy `.env.example` files in each app:
+   The application uses MongoDB Atlas (cloud MongoDB) and does not include a local MongoDB container.
+   
+   **Create MongoDB Atlas Cluster:**
+   1. Go to [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) and create a free account
+   2. Create a new cluster (M0 Free tier is sufficient for development)
+   3. Create a database user:
+      - Go to "Database Access" → "Add New Database User"
+      - Choose "Password" authentication
+      - Create username and strong password
+   4. Whitelist your IP address:
+      - Go to "Network Access" → "Add IP Address"
+      - Click "Allow Access from Anywhere" for development (0.0.0.0/0)
+      - For production, whitelist only specific IPs
+   5. Get connection string:
+      - Go to "Database" → "Connect"
+      - Choose "Connect your application"
+      - Copy the connection string (starts with `mongodb+srv://`)
+      - Replace `<password>` with your database user password
+      - Replace `<dbname>` with `car-service` or your preferred database name
+   
+   Example connection string:
+   ```
+   mongodb+srv://username:password@cluster0.xxxxx.mongodb.net/car-service?retryWrites=true&w=majority
+   ```
+
+4. **Set up environment variables**
+   
+   Copy `.env.example` files to create your `.env` files:
    ```powershell
-   # Backend
+   # Backend API
    Copy-Item apps\api\.env.example apps\api\.env
    
-   # Frontend apps
-   Copy-Item apps\web\.env.example apps\web\.env
-   Copy-Item apps\admin\.env.example apps\admin\.env
+   # Frontend apps (Next.js uses .env.local)
+   Copy-Item apps\web\.env.local.example apps\web\.env.local
+   Copy-Item apps\admin\.env.local.example apps\admin\.env.local
    ```
    
-   Edit `.env` files with your configuration.
-
-4. **Start Docker services**
-   ```powershell
-   docker-compose up -d
-   ```
+   Edit each `.env` file with your configuration (see Environment Variables section below).
    
-   This starts:
-   - MongoDB (port 27017)
-   - Redis (port 6379)
+   **⚠️ Security Warning:**
+   - **NEVER commit `.env` or `.env.local` files to version control**
+   - `.env` files are already in `.gitignore`
+   - `.env.example` files are safe to commit (they contain placeholders)
+   - Use strong, unique values for all secrets in production
+   - Different environments (development, staging, production) should use different secrets
 
 5. **Seed the database**
    ```powershell
-   npm run seed
+   npm run seed --workspace=apps/api
    ```
    
    Creates:
-   - SuperAdmin user (email: superadmin@car-service.com, password: SuperAdmin123!)
+   - SuperAdmin user (uses SUPERADMIN_EMAIL and SUPERADMIN_PASSWORD from .env)
    - Demo organization with branches
    - Demo users with different roles
    - Sample clients and cars
@@ -132,46 +152,113 @@ Platform (SuperAdmin)
 ### Environment Variables
 
 #### Backend (`apps/api/.env`)
+
+**⚠️ Required Variables (application will not start without them):**
+
 ```env
-# Server
+# Node Environment (required)
 NODE_ENV=development
+# Must be: development, staging, or production
+
+# Server (optional - defaults provided)
 PORT=3001
 API_URL=http://localhost:3001
 
-# Database
-MONGODB_URI=mongodb://localhost:27017/car-service
+# MongoDB Atlas Connection (REQUIRED)
+MONGO_URI=mongodb+srv://username:password@cluster0.xxxxx.mongodb.net/car-service?retryWrites=true&w=majority
+# Must start with mongodb+srv:// (MongoDB Atlas only)
+# Get connection string from MongoDB Atlas Dashboard → Connect → Connect your application
 
-# JWT
-JWT_SECRET=your-super-secret-jwt-key-change-in-production
-JWT_REFRESH_SECRET=your-super-secret-refresh-key-change-in-production
-JWT_ACCESS_EXPIRY=15m
-JWT_REFRESH_EXPIRY=7d
+# JWT Secrets (REQUIRED)
+JWT_ACCESS_SECRET=your-super-secret-access-token-key-minimum-64-characters-long-change-in-production-use-strong-random-string
+JWT_REFRESH_SECRET=your-super-secret-refresh-token-key-minimum-64-characters-long-change-in-production-use-strong-random-string
+# Minimum 64 characters each
+# Must be different from each other
+# Generate secure secrets (see Security section below)
 
-# Redis (optional)
-REDIS_HOST=localhost
-REDIS_PORT=6379
+# JWT Expiration (optional - defaults provided)
+JWT_ACCESS_EXPIRES_IN=15m
+JWT_REFRESH_EXPIRES_IN=7d
+# Format: number + unit (s=seconds, m=minutes, h=hours, d=days)
+# Examples: 15m, 1h, 7d, 30d
 
-# Email (future)
+# SuperAdmin Credentials (REQUIRED)
+SUPERADMIN_EMAIL=admin@yourcompany.com
+SUPERADMIN_PASSWORD=YourSecurePassword123!
+# Email must be valid email format
+# Password must be minimum 12 characters
+# Password must be PLAIN TEXT (not bcrypt hash) - will be hashed automatically
+
+# Bcrypt Salt Rounds (optional - defaults to 10)
+BCRYPT_SALT_ROUNDS=10
+# Recommended: 10-12 for production (higher = more secure but slower)
+
+# CORS Origin (optional - defaults to WEB_URL and ADMIN_URL)
+CORS_ORIGIN=
+# Comma-separated list of allowed origins (e.g., "http://localhost:3002,http://localhost:3003")
+# Leave empty to use WEB_URL and ADMIN_URL from above
+
+# SMTP Email (optional)
 SMTP_HOST=smtp.example.com
 SMTP_PORT=587
 SMTP_USER=your-email@example.com
 SMTP_PASS=your-password
 
-# Frontend URLs
+# Frontend URLs (optional - defaults provided)
 WEB_URL=http://localhost:3002
 ADMIN_URL=http://localhost:3003
 ```
 
+**🔒 Generating Secure JWT Secrets:**
+
+**On Windows (PowerShell):**
+```powershell
+# Generate 64-character random string for JWT_ACCESS_SECRET
+-join ((48..57) + (65..90) + (97..122) | Get-Random -Count 64 | ForEach-Object {[char]$_})
+
+# Generate 64-character random string for JWT_REFRESH_SECRET (different from access secret)
+-join ((48..57) + (65..90) + (97..122) | Get-Random -Count 64 | ForEach-Object {[char]$_})
+```
+
+**On Linux/Mac:**
+```bash
+# Generate 64-character random string for JWT_ACCESS_SECRET
+openssl rand -base64 48 | tr -d "=+/" | cut -c1-64
+
+# Generate 64-character random string for JWT_REFRESH_SECRET
+openssl rand -base64 48 | tr -d "=+/" | cut -c1-64
+```
+
+**Or use Node.js:**
+```javascript
+require('crypto').randomBytes(64).toString('hex')
+```
+
 #### Client Portal (`apps/web/.env.local`)
+
+**Note:** Next.js automatically loads `.env.local` files - no `dotenv` package needed.
+
 ```env
+# API URL
 NEXT_PUBLIC_API_URL=http://localhost:3001
-NEXT_PUBLIC_APP_URL=http://localhost:3002
+
+# Application Name
+NEXT_PUBLIC_APP_NAME=Car Service Portal
+
+# Stripe Publishable Key (Optional)
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=<your_stripe_publishable_key>
 ```
 
 #### Admin Panel (`apps/admin/.env.local`)
+
+**Note:** Next.js automatically loads `.env.local` files - no `dotenv` package needed.
+
 ```env
+# API URL
 NEXT_PUBLIC_API_URL=http://localhost:3001
-NEXT_PUBLIC_APP_URL=http://localhost:3003
+
+# Application Name
+NEXT_PUBLIC_APP_NAME=Car Service Admin
 ```
 
 ## 📁 Project Structure
@@ -286,11 +373,6 @@ npm run dev              # Start client portal
 cd apps/admin
 npm run dev              # Start admin panel
 
-# Docker
-npm run docker:up        # Start Docker services
-npm run docker:down      # Stop Docker services
-npm run docker:logs      # View Docker logs
-
 # Build
 npm run build            # Build all apps
 ```
@@ -339,14 +421,53 @@ npm run build            # Build all apps
 
 ## 🔒 Security
 
-- JWT with refresh token rotation
-- RBAC with granular permissions
-- Multi-tenant data isolation
-- Audit logging for all operations
-- Input validation & sanitization
-- CORS configuration
+### Security Features
+
+- **JWT Authentication** with refresh token rotation
+- **RBAC** with granular permissions
+- **Multi-tenant data isolation**
+- **Audit logging** for all operations
+- **Input validation & sanitization**
+- **CORS configuration**
+- **Environment validation** on startup (fail-fast)
+- **Strong password requirements** for SuperAdmin
+- **MongoDB Atlas** connection (encrypted, cloud-managed)
 - Rate limiting (planned)
 - 2FA support (planned)
+
+### Environment Configuration & Fail-Fast Validation
+
+The application uses **fail-fast** validation on startup:
+
+- **Environment variables are validated using Zod schema**
+- **Application will NOT start if required variables are missing or invalid**
+- **Clear error messages** guide you to fix configuration issues
+- **Typed configuration** ensures type safety across the application
+
+**Fail-fast validation checks:**
+- `MONGO_URI` must be present and start with `mongodb+srv://`
+- `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET` must be at least 64 characters
+- `SUPERADMIN_EMAIL` must be a valid email format
+- `SUPERADMIN_PASSWORD` must be at least 12 characters and plain text (not hashed)
+- `NODE_ENV` must be one of: `development`, `staging`, `production`
+- JWT secrets must be different from each other
+- JWT expiration formats must match pattern (e.g., `15m`, `7d`)
+- `BCRYPT_SALT_ROUNDS` must be between 10 and 12
+
+**All services import from `config` module, never `process.env` directly.**
+
+### Security Best Practices
+
+#### Environment Variables
+
+**⚠️ NEVER commit `.env` files to version control**
+
+- All `.env` and `.env.local` files are in `.gitignore`
+- `.env.example` files are safe to commit (they contain placeholders only)
+- Copy `.env.example` to `.env` and fill in actual values
+- Use different secrets for each environment (development, staging, production)
+- Rotate secrets regularly in production
+- Use strong, randomly generated secrets (minimum 64 characters for JWT)
 
 ## 📝 API Documentation
 
@@ -391,11 +512,34 @@ npm test
 - [ ] Configure backups
 - [ ] Set up CI/CD
 
-### Docker Production
+### Production Deployment
 
-```powershell
-docker-compose -f docker-compose.prod.yml up -d
-```
+The application runs directly with Node.js and connects to MongoDB Atlas. No Docker or Redis required.
+
+**Production Deployment Steps:**
+
+1. **Set environment variables:**
+   ```powershell
+   NODE_ENV=production
+   MONGO_URI=<your-production-mongodb-atlas-uri>
+   # ... other required variables
+   ```
+
+2. **Build the application:**
+   ```powershell
+   npm run build
+   ```
+
+3. **Start with process manager (PM2):**
+   ```powershell
+   npm install -g pm2
+   cd apps/api
+   pm2 start dist/index.js --name car-service-api
+   ```
+
+4. **Set up reverse proxy (nginx) if needed** for production domains.
+
+5. **Configure monitoring and backups** for MongoDB Atlas.
 
 ## 🤝 Contributing
 

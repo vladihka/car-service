@@ -1,17 +1,12 @@
 import { Router } from 'express';
 import authRoutes from './auth.routes';
+import { healthCheck } from '../controllers/health.controller';
 
 const router = Router();
 
 router.use('/auth', authRoutes);
 
-// Health check
-router.get('/health', (req, res) => {
-  res.json({
-    success: true,
-    message: 'API is running',
-    timestamp: new Date().toISOString(),
-  });
-});
+// Health check endpoint
+router.get('/health', healthCheck);
 
 export default router;

@@ -11,10 +11,7 @@
     "dev": "npm run dev --workspaces",
     "build": "npm run build --workspaces",
     "lint": "npm run lint --workspaces",
-    "seed": "cd apps/api && npm run seed",
-    "docker:up": "docker-compose up -d",
-    "docker:down": "docker-compose down",
-    "docker:logs": "docker-compose logs -f"
+    "seed": "cd apps/api && npm run seed"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

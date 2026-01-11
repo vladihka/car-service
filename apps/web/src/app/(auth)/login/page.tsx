@@ -17,7 +17,8 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/login`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${apiUrl}/api/v1/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -25,10 +26,17 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password }),
       });
 
+      // Проверить Content-Type перед парсингом JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        throw new Error(`Server error: ${response.status} ${response.statusText}. ${text.substring(0, 100)}`);
+      }
+
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error?.message || 'Login failed');
+        throw new Error(data.error?.message || data.message || 'Login failed');
       }
 
       // Store tokens
@@ -40,6 +48,7 @@ export default function LoginPage() {
       // Redirect to dashboard
       router.push('/dashboard');
     } catch (err: any) {
+      console.error('Login error:', err);
       setError(err.message || 'An error occurred');
     } finally {
       setLoading(false);

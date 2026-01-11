@@ -4,7 +4,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import { errorHandler } from './middlewares/error.middleware';
 import routes from './routes';
-import { env } from './config/env';
+import { config } from './config';
 import logger from './utils/logger';
 
 const app: Application = express();
@@ -14,7 +14,7 @@ app.use(helmet());
 
 // CORS
 app.use(cors({
-  origin: [env.webUrl, env.adminUrl],
+  origin: config.cors.origin,
   credentials: true,
 }));
 
@@ -23,7 +23,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Logging
-if (env.nodeEnv !== 'test') {
+if (config.nodeEnv !== 'test') {
   app.use(morgan('combined', {
     stream: {
       write: (message: string) => logger.info(message.trim()),

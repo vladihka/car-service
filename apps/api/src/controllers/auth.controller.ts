@@ -1,17 +1,35 @@
 import { Response, NextFunction } from 'express';
 import authService from '../services/auth.service';
 import { AuthRequest } from '../middlewares/auth.middleware';
-import { body } from 'express-validator';
-import { UserRole } from '../types';
+import { 
+  RegisterDtoSchema, 
+  LoginDtoSchema, 
+  RefreshTokenDtoSchema, 
+  LogoutDtoSchema,
+  RegisterDto,
+  LoginDto,
+  RefreshTokenDto,
+  LogoutDto,
+} from '../types/auth.dto';
+import { validateZod } from '../middlewares/validation.middleware';
+import { NotFoundError } from '../utils/errors';
 
+/**
+ * Контроллер аутентификации
+ * Обрабатывает HTTP запросы для регистрации, входа, обновления токенов и выхода
+ */
 export class AuthController {
+  /**
+   * POST /api/v1/auth/login
+   * Вход пользователя
+   */
   async login(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { email, password } = req.body;
+      const data: LoginDto = req.body;
       
-      const result = await authService.login(email, password);
+      const result = await authService.login(data.email, data.password);
       
-      res.json({
+      res.status(200).json({
         success: true,
         data: result,
       });
@@ -20,22 +38,20 @@ export class AuthController {
     }
   }
   
+  /**
+   * POST /api/v1/auth/register
+   * Регистрация нового пользователя
+   * Автоматически назначает роль CLIENT если не указана
+   */
   async register(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { email, password, firstName, lastName, organizationId, branchId, role } = req.body;
+      const data: RegisterDto = req.body;
       
-      const result = await authService.register({
-        email,
-        password,
-        firstName,
-        lastName,
-        organizationId,
-        branchId,
-        role: role || UserRole.CLIENT,
-      });
+      const result = await authService.register(data);
       
       res.status(201).json({
         success: true,
+        message: 'Пользователь успешно зарегистрирован',
         data: result,
       });
     } catch (error) {
@@ -43,17 +59,22 @@ export class AuthController {
     }
   }
   
+  /**
+   * POST /api/v1/auth/refresh
+   * Обновление access token через refresh token
+   * Реализует ротацию refresh токенов
+   */
   async refresh(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { refreshToken } = req.body;
+      const data: RefreshTokenDto = req.body;
       
-      if (!refreshToken) {
-        return next(new Error('Refresh token is required'));
+      if (!data.refreshToken) {
+        return next(new ValidationError('Refresh token обязателен'));
       }
       
-      const result = await authService.refresh(refreshToken);
+      const result = await authService.refresh(data.refreshToken);
       
-      res.json({
+      res.status(200).json({
         success: true,
         data: result,
       });
@@ -62,44 +83,49 @@ export class AuthController {
     }
   }
   
+  /**
+   * POST /api/v1/auth/logout
+   * Выход пользователя
+   * Инвалидирует refresh token
+   */
   async logout(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const userId = req.user?.userId;
-      const { refreshToken } = req.body;
-      
-      if (userId && refreshToken) {
-        await authService.logout(userId, refreshToken);
+      if (!req.user) {
+        return next(new NotFoundError('Пользователь не аутентифицирован'));
       }
       
-      res.json({
+      const data: LogoutDto = req.body;
+      
+      if (!data.refreshToken) {
+        return next(new ValidationError('Refresh token обязателен'));
+      }
+      
+      await authService.logout(req.user.userId, data.refreshToken);
+      
+      res.status(200).json({
         success: true,
-        message: 'Logged out successfully',
+        message: 'Выход выполнен успешно',
       });
     } catch (error) {
       next(error);
     }
   }
   
+  /**
+   * GET /api/v1/auth/me
+   * Получение информации о текущем пользователе
+   */
   async me(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       if (!req.user) {
-        return next(new Error('Not authenticated'));
+        return next(new NotFoundError('Пользователь не аутентифицирован'));
       }
       
-      const userRepository = (await import('../repositories/user.repository')).default;
-      const user = await userRepository.findById(req.user.userId);
+      const user = await authService.getMe(req.user.userId);
       
-      if (!user) {
-        return next(new Error('User not found'));
-      }
-      
-      const userObject = user.toObject();
-      delete userObject.password;
-      delete userObject.refreshTokens;
-      
-      res.json({
+      res.status(200).json({
         success: true,
-        data: userObject,
+        data: user,
       });
     } catch (error) {
       next(error);
@@ -107,22 +133,10 @@ export class AuthController {
   }
 }
 
-// Validation rules
-export const loginValidation = [
-  body('email').isEmail().normalizeEmail(),
-  body('password').notEmpty().isLength({ min: 6 }),
-];
-
-export const registerValidation = [
-  body('email').isEmail().normalizeEmail(),
-  body('password').isLength({ min: 8 }).matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/),
-  body('firstName').trim().notEmpty(),
-  body('lastName').trim().notEmpty(),
-  body('role').optional().isIn(Object.values(UserRole)),
-];
-
-export const refreshValidation = [
-  body('refreshToken').notEmpty(),
-];
+// Экспорт валидации для использования в routes
+export const loginValidation = validateZod(LoginDtoSchema);
+export const registerValidation = validateZod(RegisterDtoSchema);
+export const refreshValidation = validateZod(RefreshTokenDtoSchema);
+export const logoutValidation = validateZod(LogoutDtoSchema);
 
 export default new AuthController();

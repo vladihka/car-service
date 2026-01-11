@@ -75,6 +75,16 @@ export class UserRepository {
       lastLogin: new Date(),
     }).exec();
   }
+  
+  /**
+   * Очистить все refresh токены пользователя
+   * Используется при обнаружении повторного использования токена
+   */
+  async clearAllRefreshTokens(userId: string): Promise<void> {
+    await User.findByIdAndUpdate(userId, {
+      $set: { refreshTokens: [] },
+    }).exec();
+  }
 }
 
 export default new UserRepository();

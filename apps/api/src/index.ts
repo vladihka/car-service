@@ -1,6 +1,6 @@
 import app from './app';
 import { connectDatabase } from './config/database';
-import { env } from './config/env';
+import { config } from './config';
 import logger from './utils/logger';
 
 const startServer = async (): Promise<void> => {
@@ -9,9 +9,9 @@ const startServer = async (): Promise<void> => {
     await connectDatabase();
     
     // Start server
-    const server = app.listen(env.port, () => {
-      logger.info(`Server running on port ${env.port} in ${env.nodeEnv} mode`);
-      logger.info(`API URL: ${env.apiUrl}`);
+    const server = app.listen(config.port, () => {
+      logger.info(`Server running on port ${config.port} in ${config.nodeEnv} mode`);
+      logger.info(`API URL: ${config.apiUrl}`);
     });
     
     // Graceful shutdown

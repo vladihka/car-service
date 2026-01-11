@@ -11,19 +11,28 @@
    npm --version
    ```
 
-### 2. Install Docker Desktop
-1. Download Docker Desktop from [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop)
-2. Install and restart your computer
-3. Start Docker Desktop
-4. Verify installation:
-   ```powershell
-   docker --version
-   docker-compose --version
-   ```
-
-### 3. Install Git (if not already installed)
+### 2. Install Git (if not already installed)
 1. Download from [git-scm.com](https://git-scm.com/download/win)
 2. Install with default settings
+
+### 3. Set up MongoDB Atlas Account
+1. Go to [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
+2. Create a free account
+3. Create a new cluster (M0 Free tier is sufficient for development)
+4. Create a database user:
+   - Go to "Database Access" → "Add New Database User"
+   - Choose "Password" authentication
+   - Create username and strong password
+5. Whitelist your IP address:
+   - Go to "Network Access" → "Add IP Address"
+   - Click "Allow Access from Anywhere" for development (0.0.0.0/0)
+   - For production, whitelist only specific IPs
+6. Get connection string:
+   - Go to "Database" → "Connect"
+   - Choose "Connect your application"
+   - Copy the connection string (starts with `mongodb+srv://`)
+   - Replace `<password>` with your database user password
+   - Replace `<dbname>` with `car-service` or your preferred database name
 
 ## Project Setup
 
@@ -46,46 +55,37 @@ This installs dependencies for all workspaces (api, web, admin, shared).
    ```powershell
    Copy-Item apps\api\.env.example apps\api\.env
    ```
-2. Edit `apps\api\.env` and update if needed (defaults work for local dev)
+2. Edit `apps\api\.env` and update:
+   - `MONGO_URI` - Your MongoDB Atlas connection string
+   - `JWT_ACCESS_SECRET` - Generate a secure 64+ character string
+   - `JWT_REFRESH_SECRET` - Generate a different secure 64+ character string
+   - `SUPERADMIN_EMAIL` - Your admin email
+   - `SUPERADMIN_PASSWORD` - Your secure password (min 12 chars)
 
 #### Client Portal
 ```powershell
-Copy-Item apps\web\.env.example apps\web\.env.local
+Copy-Item apps\web\.env.local.example apps\web\.env.local
 ```
 
 #### Admin Panel
 ```powershell
-Copy-Item apps\admin\.env.example apps\admin\.env.local
+Copy-Item apps\admin\.env.local.example apps\admin\.env.local
 ```
 
-### Step 4: Start Docker Services
-```powershell
-docker-compose -f docker-compose.dev.yml up -d
-```
-
-This starts:
-- MongoDB on port 27017
-- Redis on port 6379
-
-Verify containers are running:
-```powershell
-docker ps
-```
-
-### Step 5: Seed Database
+### Step 4: Seed Database
 ```powershell
 npm run seed
 ```
 
 This creates:
-- SuperAdmin user
+- SuperAdmin user (uses credentials from `.env`)
 - Demo organization (AutoCare Network)
 - Demo branches
 - Demo users (Owner, Admin, Manager, Mechanic, Accountant)
 - Demo clients and cars
 - Demo parts and suppliers
 
-### Step 6: Start Development Servers
+### Step 5: Start Development Servers
 
 #### Option A: Start All Apps
 ```powershell
@@ -125,18 +125,19 @@ Open browser: http://localhost:3001/api/v1/health
 Should return:
 ```json
 {
-  "success": true,
-  "message": "API is running",
-  "timestamp": "..."
+  "status": "healthy",
+  "timestamp": "...",
+  "checks": {
+    "mongodb": { "status": "healthy", "message": "MongoDB Atlas connection is active" },
+    "jwt": { "status": "healthy", "message": "JWT secrets are configured and valid" }
+  }
 }
 ```
 
 ### 2. Test Login (Admin Panel)
 1. Open: http://localhost:3003
 2. Click "Admin Login"
-3. Login with:
-   - Email: `admin@autocare-network.com`
-   - Password: `Admin123!`
+3. Login with your SUPERADMIN credentials from `.env`
 
 ### 3. Test Login (Client Portal)
 1. Open: http://localhost:3002
@@ -151,10 +152,17 @@ If ports 3001, 3002, or 3003 are in use:
 - Or change ports in `.env` files and `package.json`
 
 ### MongoDB Connection Error
-- Ensure Docker Desktop is running
-- Check container: `docker ps`
-- Restart MongoDB: `docker restart car-service-mongodb`
-- Check logs: `docker logs car-service-mongodb`
+- Ensure MongoDB Atlas cluster is running
+- Check that your IP is whitelisted in MongoDB Atlas Network Access
+- Verify connection string in `.env` is correct
+- Check that database user credentials are correct
+
+### Environment Validation Error
+If the application fails to start:
+- Check that all required environment variables are set
+- Ensure JWT secrets are at least 64 characters
+- Verify MONGO_URI starts with `mongodb+srv://`
+- Check that SUPERADMIN_PASSWORD is plain text (not hashed)
 
 ### Node Modules Issues
 If you encounter module errors:
@@ -177,7 +185,7 @@ npm run build
 
 ### Making Changes
 1. Code changes are hot-reloaded automatically
-2. Backend: Restart API server if needed
+2. Backend: tsx watch mode auto-restarts on file changes
 3. Frontend: Next.js auto-reloads on file changes
 
 ### Database Changes
@@ -202,24 +210,14 @@ npm install <package>
 ## Useful Commands
 
 ```powershell
-# View Docker logs
-docker-compose logs -f mongodb
-docker-compose logs -f redis
-
-# Stop Docker services
-docker-compose -f docker-compose.dev.yml down
-
-# Clear Docker volumes (⚠️ Deletes all data)
-docker-compose -f docker-compose.dev.yml down -v
-
-# Rebuild Docker containers
-docker-compose -f docker-compose.dev.yml up -d --build
-
 # Run linting
 npm run lint
 
 # Build for production
 npm run build
+
+# Seed database
+npm run seed
 ```
 
 ## Next Steps
@@ -233,8 +231,8 @@ npm run build
 ## Support
 
 For issues, check:
-1. Docker Desktop is running
-2. All ports are available
-3. Environment variables are set correctly
+1. All ports are available
+2. Environment variables are set correctly
+3. MongoDB Atlas connection is working
 4. Database is seeded
 5. All dependencies are installed

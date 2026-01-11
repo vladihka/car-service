@@ -21,7 +21,8 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/register`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${apiUrl}/api/v1/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -32,10 +33,17 @@ export default function RegisterPage() {
         }),
       });
 
+      // Проверить Content-Type перед парсингом JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        throw new Error(`Server error: ${response.status} ${response.statusText}. ${text.substring(0, 100)}`);
+      }
+
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error?.message || 'Registration failed');
+        throw new Error(data.error?.message || data.message || 'Registration failed');
       }
 
       // Store tokens
@@ -47,6 +55,7 @@ export default function RegisterPage() {
       // Redirect to dashboard
       router.push('/dashboard');
     } catch (err: any) {
+      console.error('Registration error:', err);
       setError(err.message || 'An error occurred');
     } finally {
       setLoading(false);

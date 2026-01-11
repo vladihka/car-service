@@ -1,0 +1,239 @@
+###
+# REST Client Examples для тестирования API аутентификации
+# Используйте расширение REST Client для VS Code
+# Или импортируйте в Postman/Insomnia
+###
+
+@baseUrl = http://localhost:3001/api/v1
+@accessToken = your_access_token_here
+@refreshToken = your_refresh_token_here
+
+### ============================================
+### 1. РЕГИСТРАЦИЯ ПОЛЬЗОВАТЕЛЯ
+### ============================================
+
+### Регистрация клиента (автоматически роль CLIENT)
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "client@example.com",
+  "password": "SecurePass123",
+  "firstName": "Иван",
+  "lastName": "Иванов",
+  "phone": "+7-999-123-45-67"
+}
+
+### Регистрация с указанием organizationId (multi-tenant)
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "client2@example.com",
+  "password": "SecurePass123",
+  "firstName": "Петр",
+  "lastName": "Петров",
+  "organizationId": "507f1f77bcf86cd799439011"
+}
+
+### Регистрация с указанием роли (только для тестирования)
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "manager@example.com",
+  "password": "SecurePass123",
+  "firstName": "Мария",
+  "lastName": "Сидорова",
+  "role": "Manager",
+  "organizationId": "507f1f77bcf86cd799439011",
+  "branchId": "507f1f77bcf86cd799439012"
+}
+
+### Ошибка: регистрация с существующим email
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "client@example.com",
+  "password": "SecurePass123",
+  "firstName": "Дубликат",
+  "lastName": "Пользователь"
+}
+
+### Ошибка: валидация (слабый пароль)
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "weak@example.com",
+  "password": "123",
+  "firstName": "Слабый",
+  "lastName": "Пароль"
+}
+
+### ============================================
+### 2. ВХОД (LOGIN)
+### ============================================
+
+### Успешный вход
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "client@example.com",
+  "password": "SecurePass123"
+}
+
+### Ошибка: неверный пароль
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "client@example.com",
+  "password": "WrongPassword123"
+}
+
+### Ошибка: несуществующий пользователь
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "nonexistent@example.com",
+  "password": "SomePassword123"
+}
+
+### Ошибка: валидация (некорректный email)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "invalid-email",
+  "password": "SomePassword123"
+}
+
+### ============================================
+### 3. ОБНОВЛЕНИЕ ТОКЕНА (REFRESH)
+### ============================================
+
+### Обновление access token через refresh token
+POST {{baseUrl}}/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+### Ошибка: недействительный refresh token
+POST {{baseUrl}}/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "invalid_token_here"
+}
+
+### Ошибка: повторное использование refresh token (после первого использования)
+POST {{baseUrl}}/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+### ============================================
+### 4. ПОЛУЧЕНИЕ ТЕКУЩЕГО ПОЛЬЗОВАТЕЛЯ (ME)
+### ============================================
+
+### Получить информацию о текущем пользователе
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{accessToken}}
+
+### Ошибка: без токена
+GET {{baseUrl}}/auth/me
+
+### Ошибка: недействительный токен
+GET {{baseUrl}}/auth/me
+Authorization: Bearer invalid_token_here
+
+### Ошибка: истекший токен
+GET {{baseUrl}}/auth/me
+Authorization: Bearer expired_token_here
+
+### ============================================
+### 5. ВЫХОД (LOGOUT)
+### ============================================
+
+### Выход пользователя
+POST {{baseUrl}}/auth/logout
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+### Ошибка: выход без токена
+POST {{baseUrl}}/auth/logout
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+### ============================================
+### 6. ЗАЩИЩЕННЫЕ РОУТЫ (примеры)
+### ============================================
+
+### Пример защищенного роута (требует аутентификации)
+GET {{baseUrl}}/users
+Authorization: Bearer {{accessToken}}
+
+### Пример роута с проверкой роли (требует роль Admin)
+GET {{baseUrl}}/admin/dashboard
+Authorization: Bearer {{accessToken}}
+
+### Пример роута с проверкой прав (требует permission users:read)
+GET {{baseUrl}}/users/507f1f77bcf86cd799439011
+Authorization: Bearer {{accessToken}}
+
+### ============================================
+### 7. ПОЛНЫЙ СЦЕНАРИЙ ИСПОЛЬЗОВАНИЯ
+### ============================================
+
+### Шаг 1: Регистрация
+# @name register
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "newuser@example.com",
+  "password": "SecurePass123",
+  "firstName": "Новый",
+  "lastName": "Пользователь"
+}
+
+### Шаг 2: Сохранить токены из ответа регистрации
+# Используйте переменные из ответа:
+# @accessToken = {{register.response.body.data.accessToken}}
+# @refreshToken = {{register.response.body.data.refreshToken}}
+
+### Шаг 3: Получить информацию о себе
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{accessToken}}
+
+### Шаг 4: Обновить токены (когда access token истечет)
+POST {{baseUrl}}/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+### Шаг 5: Выход
+POST {{baseUrl}}/auth/logout
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}

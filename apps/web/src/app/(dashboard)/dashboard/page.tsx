@@ -21,20 +21,36 @@ export default function DashboardPage() {
   const fetchUser = async () => {
     try {
       const token = localStorage.getItem('accessToken');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/me`, {
+      if (!token) {
+        router.push('/login');
+        return;
+      }
+
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${apiUrl}/api/v1/auth/me`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
+      // Проверить Content-Type перед парсингом JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        throw new Error(`Server error: ${response.status} ${response.statusText}`);
+      }
+
       if (!response.ok) {
-        throw new Error('Failed to fetch user');
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error?.message || 'Failed to fetch user');
       }
 
       const data = await response.json();
       setUser(data.data);
     } catch (error) {
       console.error('Error fetching user:', error);
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
       router.push('/login');
     } finally {
       setLoading(false);

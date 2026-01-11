@@ -1,18 +1,15 @@
 import mongoose from 'mongoose';
-import dotenv from 'dotenv';
-import path from 'path';
-import { connectDatabase } from '../src/config/database';
-import Organization from '../src/models/Organization';
-import Branch from '../src/models/Branch';
-import User from '../src/models/User';
-import Client from '../src/models/Client';
-import Car from '../src/models/Car';
-import Part from '../src/models/Part';
-import Supplier from '../src/models/Supplier';
-import { UserRole, SubscriptionPlan, SubscriptionStatus } from '../src/types';
-import { getPermissionsByRole } from '../src/types/permissions';
-
-dotenv.config({ path: path.join(__dirname, '../.env') });
+import { connectDatabase } from '../config/database';
+import Organization from '../models/Organization';
+import Branch from '../models/Branch';
+import User from '../models/User';
+import Client from '../models/Client';
+import Car from '../models/Car';
+import Part from '../models/Part';
+import Supplier from '../models/Supplier';
+import { UserRole, SubscriptionPlan, SubscriptionStatus } from '../types';
+import { getPermissionsByRole } from '../types/permissions';
+import { config } from '../config';
 
 const seed = async (): Promise<void> => {
   try {
@@ -33,9 +30,15 @@ const seed = async (): Promise<void> => {
     
     // 1. Create SuperAdmin user (platform owner)
     console.log('👤 Creating SuperAdmin...');
+    
+    // Validate password is not hashed
+    if (config.superadmin.password.startsWith('$2b$') || config.superadmin.password.startsWith('$2a$') || config.superadmin.password.startsWith('$2y$')) {
+      throw new Error('SUPERADMIN_PASSWORD must be a plain password, not a bcrypt hash. Please provide the plain password in .env file.');
+    }
+    
     const superAdmin = await User.create({
-      email: 'superadmin@car-service.com',
-      password: 'SuperAdmin123!',
+      email: config.superadmin.email,
+      password: config.superadmin.password, // Will be hashed by User model pre-save hook
       firstName: 'Super',
       lastName: 'Admin',
       role: UserRole.SUPER_ADMIN,
@@ -316,7 +319,7 @@ const seed = async (): Promise<void> => {
     console.log('\n✅ Seed completed successfully!');
     console.log('\n📋 Login credentials:');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('SuperAdmin: superadmin@car-service.com / SuperAdmin123!');
+    console.log(`SuperAdmin: ${config.superadmin.email} / [password from .env]`);
     console.log('Owner:      owner@autocare-network.com / Owner123!');
     console.log('Admin:      admin@autocare-network.com / Admin123!');
     console.log('Manager:    manager@autocare-network.com / Manager123!');

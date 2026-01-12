@@ -1,14 +1,18 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { PaymentStatus, PaymentMethod } from '../types';
 
 export interface IPayment extends Document {
   organizationId: mongoose.Types.ObjectId;
   branchId: mongoose.Types.ObjectId;
   invoiceId: mongoose.Types.ObjectId;
+  workOrderId?: mongoose.Types.ObjectId;
   clientId: mongoose.Types.ObjectId;
   amount: number;
-  paymentDate: Date;
-  method: 'cash' | 'card' | 'transfer' | 'check' | 'other';
-  reference?: string;
+  currency: string;
+  method: PaymentMethod;
+  status: PaymentStatus;
+  transactionId?: string;
+  paidAt?: Date;
   notes?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -34,6 +38,11 @@ const PaymentSchema = new Schema<IPayment>(
       required: true,
       index: true,
     },
+    workOrderId: {
+      type: Schema.Types.ObjectId,
+      ref: 'WorkOrder',
+      index: true,
+    },
     clientId: {
       type: Schema.Types.ObjectId,
       ref: 'Client',
@@ -41,13 +50,21 @@ const PaymentSchema = new Schema<IPayment>(
       index: true,
     },
     amount: { type: Number, required: true, min: 0 },
-    paymentDate: { type: Date, default: Date.now, required: true },
+    currency: { type: String, required: true, default: 'USD', trim: true },
     method: {
       type: String,
-      enum: ['cash', 'card', 'transfer', 'check', 'other'],
+      enum: Object.values(PaymentMethod),
       required: true,
+      index: true,
     },
-    reference: String,
+    status: {
+      type: String,
+      enum: Object.values(PaymentStatus),
+      default: PaymentStatus.PENDING,
+      index: true,
+    },
+    transactionId: { type: String, trim: true, index: true },
+    paidAt: Date,
     notes: String,
   },
   {
@@ -55,9 +72,11 @@ const PaymentSchema = new Schema<IPayment>(
   }
 );
 
-PaymentSchema.index({ organizationId: 1, branchId: 1 });
+PaymentSchema.index({ organizationId: 1, branchId: 1, status: 1 });
 PaymentSchema.index({ organizationId: 1, invoiceId: 1 });
+PaymentSchema.index({ organizationId: 1, workOrderId: 1 });
 PaymentSchema.index({ organizationId: 1, clientId: 1 });
-PaymentSchema.index({ paymentDate: 1 });
+PaymentSchema.index({ paidAt: 1, status: 1 });
+PaymentSchema.index({ transactionId: 1 });
 
 export default mongoose.model<IPayment>('Payment', PaymentSchema);

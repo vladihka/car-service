@@ -1,19 +1,24 @@
+/**
+ * Модель запчастей (Parts)
+ * Хранит информацию о запчастях на складе
+ */
+
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IPart extends Document {
   organizationId: mongoose.Types.ObjectId;
-  branchId?: mongoose.Types.ObjectId;
   name: string;
-  sku: string;
-  description?: string;
+  sku: string; // Артикул (Stock Keeping Unit)
+  manufacturer?: string;
   category?: string;
-  supplierId?: mongoose.Types.ObjectId;
-  cost: number;
-  price: number;
-  stock: number;
-  minStock: number;
-  unit: string;
-  location?: string;
+  price: number; // Цена продажи
+  cost: number; // Себестоимость
+  quantity: number; // Текущее количество
+  minQuantity: number; // Минимальный остаток (для алертов)
+  reservedQuantity: number; // Зарезервированное количество
+  unit?: string; // Единица измерения (шт, кг, литр и т.д.)
+  location?: string; // Место на складе
+  description?: string;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -27,41 +32,78 @@ const PartSchema = new Schema<IPart>(
       required: true,
       index: true,
     },
-    branchId: {
-      type: Schema.Types.ObjectId,
-      ref: 'Branch',
+    name: {
+      type: String,
+      required: true,
+      trim: true,
       index: true,
     },
-    name: { type: String, required: true, trim: true },
     sku: {
       type: String,
       required: true,
       trim: true,
-      uppercase: true,
       index: true,
+    },
+    manufacturer: {
+      type: String,
+      trim: true,
+    },
+    category: {
+      type: String,
+      trim: true,
+      index: true,
+    },
+    price: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    cost: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    quantity: {
+      type: Number,
+      required: true,
+      default: 0,
+      min: 0,
+    },
+    minQuantity: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    reservedQuantity: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    unit: {
+      type: String,
+      default: 'шт',
+      trim: true,
+    },
+    location: {
+      type: String,
+      trim: true,
     },
     description: String,
-    category: String,
-    supplierId: {
-      type: Schema.Types.ObjectId,
-      ref: 'Supplier',
+    isActive: {
+      type: Boolean,
+      default: true,
       index: true,
     },
-    cost: { type: Number, required: true, min: 0 },
-    price: { type: Number, required: true, min: 0 },
-    stock: { type: Number, default: 0, min: 0 },
-    minStock: { type: Number, default: 0, min: 0 },
-    unit: { type: String, default: 'pcs' },
-    location: String,
-    isActive: { type: Boolean, default: true },
   },
   {
     timestamps: true,
   }
 );
 
-PartSchema.index({ organizationId: 1, branchId: 1, sku: 1 }, { unique: true });
-PartSchema.index({ organizationId: 1, isActive: 1 });
-PartSchema.index({ organizationId: 1, stock: 1 });
+// Составной индекс для уникальности SKU в рамках организации
+PartSchema.index({ organizationId: 1, sku: 1 }, { unique: true });
+PartSchema.index({ organizationId: 1, category: 1 });
+PartSchema.index({ organizationId: 1, isActive: 1, quantity: 1 });
+PartSchema.index({ organizationId: 1, minQuantity: 1, quantity: 1 }); // Для поиска low stock
 
 export default mongoose.model<IPart>('Part', PartSchema);

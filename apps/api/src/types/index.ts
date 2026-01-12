@@ -32,10 +32,23 @@ export enum WorkOrderStatus {
 
 export enum InvoiceStatus {
   DRAFT = 'draft',
-  SENT = 'sent',
+  ISSUED = 'issued',
   PAID = 'paid',
-  OVERDUE = 'overdue',
   CANCELLED = 'cancelled',
+}
+
+export enum PaymentStatus {
+  PENDING = 'pending',
+  COMPLETED = 'completed',
+  FAILED = 'failed',
+  REFUNDED = 'refunded',
+}
+
+export enum PaymentMethod {
+  CASH = 'cash',
+  CARD = 'card',
+  TRANSFER = 'transfer',
+  ONLINE = 'online',
 }
 
 export enum SubscriptionStatus {
@@ -49,6 +62,62 @@ export enum SubscriptionPlan {
   STARTER = 'starter',
   PROFESSIONAL = 'professional',
   ENTERPRISE = 'enterprise',
+}
+
+/**
+ * Типы движений по складу
+ */
+export enum StockMovementType {
+  IN = 'in', // Приход
+  OUT = 'out', // Расход
+  ADJUSTMENT = 'adjustment', // Корректировка
+  WRITEOFF = 'writeoff', // Списание
+  RESERVATION = 'reservation', // Резервирование
+  RETURN = 'return', // Возврат
+}
+
+/**
+ * Статусы заказов поставщикам
+ */
+export enum PurchaseOrderStatus {
+  DRAFT = 'draft',
+  ORDERED = 'ordered',
+  RECEIVED = 'received',
+  CANCELLED = 'cancelled',
+}
+
+/**
+ * Типы уведомлений
+ */
+export enum NotificationType {
+  APPOINTMENT_CREATED = 'appointment_created',
+  APPOINTMENT_CONFIRMED = 'appointment_confirmed',
+  APPOINTMENT_CANCELLED = 'appointment_cancelled',
+  MECHANIC_ASSIGNED = 'mechanic_assigned',
+  WORK_ORDER_STATUS_CHANGED = 'work_order_status_changed',
+  VEHICLE_READY = 'vehicle_ready',
+  APPOINTMENT_REMINDER = 'appointment_reminder',
+  WORK_ORDER_OVERDUE = 'work_order_overdue',
+}
+
+/**
+ * Каналы доставки уведомлений
+ */
+export enum NotificationChannel {
+  EMAIL = 'email',
+  PUSH = 'push',
+  IN_APP = 'in_app',
+}
+
+/**
+ * Статусы уведомлений
+ */
+export enum NotificationStatus {
+  PENDING = 'pending',
+  SENT = 'sent',
+  DELIVERED = 'delivered',
+  FAILED = 'failed',
+  READ = 'read',
 }
 
 export interface PaginationParams {

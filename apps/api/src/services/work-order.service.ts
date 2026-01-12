@@ -8,6 +8,7 @@ import Appointment from '../models/Appointment';
 import Client from '../models/Client';
 import Car from '../models/Car';
 import User from '../models/User';
+import stockService from './stock.service';
 import { AuthRequest } from '../middlewares/auth.middleware';
 import { combinedFilter, tenantFilter } from '../middlewares/tenant.middleware';
 import { NotFoundError, ForbiddenError, BadRequestError } from '../utils/errors';
@@ -222,6 +223,7 @@ export class WorkOrderService {
     }
     
     // Обновить статус и связанные поля
+    const oldStatus = workOrder.status;
     if (data.status) {
       workOrder.status = data.status;
       
@@ -231,6 +233,29 @@ export class WorkOrderService {
       }
       if (data.status === WorkOrderStatus.COMPLETED && !workOrder.finishedAt) {
         workOrder.finishedAt = new Date();
+        
+        // Автоматическое списание запчастей и создание счета при закрытии заказа
+        if (oldStatus !== WorkOrderStatus.COMPLETED && user.organizationId) {
+          // Списание запчастей
+          stockService.writeOffPartsFromWorkOrder(
+            workOrder._id.toString(),
+            user.organizationId,
+            user.branchId,
+            user.userId
+          ).catch(error => {
+            logger.error(`Error writing off parts for work order ${workOrder._id}:`, error);
+          });
+          
+          // Создание счета
+          invoiceService.createFromWorkOrder(
+            workOrder._id.toString(),
+            user.organizationId,
+            user.branchId!,
+            user.userId
+          ).catch(error => {
+            logger.error(`Error creating invoice for work order ${workOrder._id}:`, error);
+          });
+        }
       }
     }
     

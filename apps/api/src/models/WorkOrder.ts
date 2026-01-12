@@ -6,15 +6,19 @@ export interface IWorkOrder extends Document {
   branchId: mongoose.Types.ObjectId;
   clientId: mongoose.Types.ObjectId;
   carId: mongoose.Types.ObjectId;
+  appointmentId?: mongoose.Types.ObjectId;
   workOrderNumber: string;
   status: WorkOrderStatus;
   description: string;
+  diagnostics?: string;
   estimatedCost?: number;
   actualCost?: number;
+  finalPrice?: number;
   estimatedCompletion?: Date;
-  completedAt?: Date;
+  startedAt?: Date;
+  finishedAt?: Date;
   assignedTo?: mongoose.Types.ObjectId;
-  parts: Array<{
+  partsUsed: Array<{
     partId: mongoose.Types.ObjectId;
     quantity: number;
     unitPrice: number;
@@ -55,6 +59,11 @@ const WorkOrderSchema = new Schema<IWorkOrder>(
       required: true,
       index: true,
     },
+    appointmentId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Appointment',
+      index: true,
+    },
     workOrderNumber: {
       type: String,
       required: true,
@@ -68,16 +77,19 @@ const WorkOrderSchema = new Schema<IWorkOrder>(
       index: true,
     },
     description: { type: String, required: true },
+    diagnostics: String,
     estimatedCost: { type: Number, min: 0 },
     actualCost: { type: Number, min: 0 },
+    finalPrice: { type: Number, min: 0 },
     estimatedCompletion: Date,
-    completedAt: Date,
+    startedAt: Date,
+    finishedAt: Date,
     assignedTo: {
       type: Schema.Types.ObjectId,
       ref: 'User',
       index: true,
     },
-    parts: [{
+    partsUsed: [{
       partId: { type: Schema.Types.ObjectId, ref: 'Part' },
       quantity: { type: Number, required: true, min: 1 },
       unitPrice: { type: Number, required: true, min: 0 },

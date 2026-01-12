@@ -14,6 +14,14 @@ export enum UserRole {
   CLIENT = 'Client',
 }
 
+export enum AppointmentStatus {
+  PENDING = 'pending',
+  CONFIRMED = 'confirmed',
+  IN_PROGRESS = 'in_progress',
+  DONE = 'done',
+  CANCELLED = 'cancelled',
+}
+
 export enum WorkOrderStatus {
   PENDING = 'pending',
   IN_PROGRESS = 'in_progress',

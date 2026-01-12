@@ -47,10 +47,24 @@ const seed = async (): Promise<void> => {
     });
     console.log('✅ SuperAdmin created:', superAdmin.email);
     
-    // 2. Create Demo Organization
+    // 2. Create Owner user first (needed for organization)
+    console.log('👤 Creating Owner user...');
+    const owner = await User.create({
+      email: 'owner@autocare-network.com',
+      password: 'Owner123!',
+      firstName: 'John',
+      lastName: 'Owner',
+      role: UserRole.OWNER,
+      permissions: getPermissionsByRole(UserRole.OWNER),
+      isActive: true,
+    });
+    console.log('✅ Owner created:', owner.email);
+    
+    // 3. Create Demo Organization
     console.log('🏢 Creating demo organization...');
     const organization = await Organization.create({
       name: 'AutoCare Network',
+      ownerId: owner._id,
       email: 'info@autocare-network.com',
       phone: '+1-555-0100',
       address: {
@@ -69,9 +83,14 @@ const seed = async (): Promise<void> => {
       },
       isActive: true,
     });
+    
+    // Update owner's organizationId
+    owner.organizationId = organization._id;
+    await owner.save();
+    
     console.log('✅ Organization created:', organization.name);
     
-    // 3. Create Branches
+    // 4. Create Branches
     console.log('🏪 Creating branches...');
     const branch1 = await Branch.create({
       organizationId: organization._id,
@@ -104,33 +123,8 @@ const seed = async (): Promise<void> => {
     });
     console.log('✅ Branches created');
     
-    // 4. Create Users for organization
+    // 5. Create Users for organization
     console.log('👥 Creating users...');
-    
-    // Owner
-    const owner = await User.create({
-      organizationId: organization._id,
-      email: 'owner@autocare-network.com',
-      password: 'Owner123!',
-      firstName: 'John',
-      lastName: 'Owner',
-      role: UserRole.OWNER,
-      permissions: getPermissionsByRole(UserRole.OWNER),
-      isActive: true,
-    });
-    
-    // Admin
-    const admin = await User.create({
-      organizationId: organization._id,
-      branchId: branch1._id,
-      email: 'admin@autocare-network.com',
-      password: 'Admin123!',
-      firstName: 'Jane',
-      lastName: 'Admin',
-      role: UserRole.ADMIN,
-      permissions: getPermissionsByRole(UserRole.ADMIN),
-      isActive: true,
-    });
     
     // Manager
     const manager = await User.create({
@@ -158,21 +152,9 @@ const seed = async (): Promise<void> => {
       isActive: true,
     });
     
-    // Accountant
-    const accountant = await User.create({
-      organizationId: organization._id,
-      email: 'accountant@autocare-network.com',
-      password: 'Accountant123!',
-      firstName: 'Carol',
-      lastName: 'Accountant',
-      role: UserRole.ACCOUNTANT,
-      permissions: getPermissionsByRole(UserRole.ACCOUNTANT),
-      isActive: true,
-    });
-    
     console.log('✅ Users created');
     
-    // 5. Create Supplier
+    // 6. Create Supplier
     console.log('🏭 Creating suppliers...');
     const supplier = await Supplier.create({
       organizationId: organization._id,
@@ -192,7 +174,7 @@ const seed = async (): Promise<void> => {
     });
     console.log('✅ Supplier created');
     
-    // 6. Create Parts
+    // 7. Create Parts
     console.log('🔧 Creating parts...');
     const part1 = await Part.create({
       organizationId: organization._id,
@@ -229,7 +211,7 @@ const seed = async (): Promise<void> => {
     });
     console.log('✅ Parts created');
     
-    // 7. Create Clients
+    // 8. Create Clients
     console.log('👤 Creating clients...');
     const client1 = await Client.create({
       organizationId: organization._id,
@@ -267,7 +249,7 @@ const seed = async (): Promise<void> => {
     });
     console.log('✅ Clients created');
     
-    // 8. Create Cars
+    // 9. Create Cars
     console.log('🚗 Creating cars...');
     const car1 = await Car.create({
       organizationId: organization._id,
@@ -320,11 +302,9 @@ const seed = async (): Promise<void> => {
     console.log('\n📋 Login credentials:');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log(`SuperAdmin: ${config.superadmin.email} / [password from .env]`);
-    console.log('Owner:      owner@autocare-network.com / Owner123!');
-    console.log('Admin:      admin@autocare-network.com / Admin123!');
-    console.log('Manager:    manager@autocare-network.com / Manager123!');
-    console.log('Mechanic:   mechanic@autocare-network.com / Mechanic123!');
-    console.log('Accountant: accountant@autocare-network.com / Accountant123!');
+    console.log('Owner:    owner@autocare-network.com / Owner123!');
+    console.log('Manager:  manager@autocare-network.com / Manager123!');
+    console.log('Mechanic: mechanic@autocare-network.com / Mechanic123!');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
     
     process.exit(0);

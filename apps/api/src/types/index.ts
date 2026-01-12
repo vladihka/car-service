@@ -1,10 +1,16 @@
+/**
+ * Роли пользователей в системе (RBAC)
+ * SuperAdmin - полный доступ ко всем организациям
+ * Owner - владелец организации, управляет всей организацией
+ * Manager - менеджер филиала, управляет одним филиалом
+ * Mechanic - механик, работает с назначенными заказами
+ * Client - клиент, доступ только к своим записям
+ */
 export enum UserRole {
   SUPER_ADMIN = 'SuperAdmin',
   OWNER = 'Owner',
-  ADMIN = 'Admin',
   MANAGER = 'Manager',
   MECHANIC = 'Mechanic',
-  ACCOUNTANT = 'Accountant',
   CLIENT = 'Client',
 }
 

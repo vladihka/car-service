@@ -3,6 +3,7 @@ import { SubscriptionStatus, SubscriptionPlan } from '../types';
 
 export interface IOrganization extends Document {
   name: string;
+  ownerId: mongoose.Types.ObjectId; // Владелец организации (User с ролью Owner)
   email: string;
   phone?: string;
   address?: {
@@ -28,6 +29,12 @@ export interface IOrganization extends Document {
 const OrganizationSchema = new Schema<IOrganization>(
   {
     name: { type: String, required: true, trim: true },
+    ownerId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      index: true,
+    },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     phone: { type: String, trim: true },
     address: {
@@ -60,6 +67,7 @@ const OrganizationSchema = new Schema<IOrganization>(
   }
 );
 
+OrganizationSchema.index({ ownerId: 1 });
 OrganizationSchema.index({ email: 1 });
 OrganizationSchema.index({ isActive: 1 });
 

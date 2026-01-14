@@ -66,6 +66,7 @@ export enum SubscriptionStatus {
   CANCELLED = 'cancelled',
   EXPIRED = 'expired',
   SUSPENDED = 'suspended',
+  TRIALING = 'trialing',
 }
 
 export enum SubscriptionPlan {

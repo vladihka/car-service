@@ -34,6 +34,12 @@ export class NotFoundError extends AppError {
   }
 }
 
+export class BadRequestError extends AppError {
+  constructor(message: string = 'Bad request') {
+    super(message, 400);
+  }
+}
+
 export class ConflictError extends AppError {
   constructor(message: string = 'Resource already exists') {
     super(message, 409);

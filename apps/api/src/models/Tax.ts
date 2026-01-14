@@ -7,8 +7,9 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface ITax extends Document {
   organizationId: mongoose.Types.ObjectId;
-  name: string; // Название налога (НДС, налог с продаж и т.д.)
+  name: string; // Название налога (НДС, VAT, налог с продаж и т.д.)
   rate: number; // Ставка в процентах (например, 20 для 20%)
+  country?: string; // Страна применения налога
   isActive: boolean;
   isDefault: boolean; // Использовать по умолчанию
   description?: string;
@@ -34,6 +35,11 @@ const TaxSchema = new Schema<ITax>(
       required: true,
       min: 0,
       max: 100,
+    },
+    country: {
+      type: String,
+      trim: true,
+      uppercase: true,
     },
     isActive: {
       type: Boolean,

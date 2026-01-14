@@ -10,6 +10,7 @@ import Service from '../models/Service';
 import Part from '../models/Part';
 import Tax from '../models/Tax';
 import taxService from './tax.service';
+import billingProfileService from './billing-profile.service';
 import { AuthRequest } from '../middlewares/auth.middleware';
 import { combinedFilter, tenantFilter } from '../middlewares/tenant.middleware';
 import { NotFoundError, ForbiddenError, BadRequestError } from '../utils/errors';

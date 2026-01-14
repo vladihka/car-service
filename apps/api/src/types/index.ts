@@ -4,6 +4,7 @@
  * Owner - владелец организации, управляет всей организацией
  * Manager - менеджер филиала, управляет одним филиалом
  * Mechanic - механик, работает с назначенными заказами
+ * Accountant - бухгалтер, имеет доступ к финансовым данным
  * Client - клиент, доступ только к своим записям
  */
 export enum UserRole {
@@ -11,6 +12,7 @@ export enum UserRole {
   OWNER = 'Owner',
   MANAGER = 'Manager',
   MECHANIC = 'Mechanic',
+  ACCOUNTANT = 'Accountant',
   CLIENT = 'Client',
 }
 
@@ -60,8 +62,10 @@ export enum PaymentProvider {
 export enum SubscriptionStatus {
   TRIAL = 'trial',
   ACTIVE = 'active',
-  SUSPENDED = 'suspended',
+  PAST_DUE = 'past_due',
   CANCELLED = 'cancelled',
+  EXPIRED = 'expired',
+  SUSPENDED = 'suspended',
 }
 
 export enum SubscriptionPlan {

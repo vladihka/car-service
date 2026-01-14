@@ -60,7 +60,7 @@ const CarSchema = new Schema<ICar>(
 );
 
 CarSchema.index({ organizationId: 1, clientId: 1 });
-CarSchema.index({ vin: 1 });
+CarSchema.index({ organizationId: 1, vin: 1 }, { unique: true }); // Уникальный VIN в рамках организации
 CarSchema.index({ organizationId: 1, licensePlate: 1 });
 
 export default mongoose.model<ICar>('Car', CarSchema);

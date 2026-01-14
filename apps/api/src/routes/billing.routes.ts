@@ -7,6 +7,7 @@ import billingController from '../controllers/billing.controller';
 import { authenticate } from '../middlewares/auth.middleware';
 import { validateZod } from '../middlewares/validation.middleware';
 import { SubscribeDtoSchema, CancelSubscriptionDtoSchema } from '../types/billing.dto';
+import { CreateBillingProfileDtoSchema, UpdateBillingProfileDtoSchema } from '../types/billing-profile.dto';
 import { isRole } from '../middlewares/rbac.middleware';
 import { UserRole } from '../types';
 
@@ -70,6 +71,49 @@ router.get(
 router.post(
   '/webhook',
   billingController.handleWebhook.bind(billingController)
+);
+
+/**
+ * @route   POST /api/v1/billing/profile
+ * @desc    Создать или обновить биллинг-профиль
+ * @access  Private (Owner, Accountant)
+ */
+router.post(
+  '/profile',
+  authenticate,
+  isRole(UserRole.OWNER, UserRole.ACCOUNTANT, UserRole.SUPER_ADMIN),
+  validateZod(CreateBillingProfileDtoSchema),
+  billingController.createOrUpdateProfile.bind(billingController)
+);
+
+/**
+ * @route   GET /api/v1/billing/profile
+ * @desc    Получить биллинг-профиль организации
+ * @access  Private (Owner, Manager, Accountant)
+ */
+router.get(
+  '/profile',
+  authenticate,
+  isRole(
+    UserRole.OWNER,
+    UserRole.MANAGER,
+    UserRole.ACCOUNTANT,
+    UserRole.SUPER_ADMIN
+  ),
+  billingController.getProfile.bind(billingController)
+);
+
+/**
+ * @route   PATCH /api/v1/billing/profile
+ * @desc    Обновить биллинг-профиль
+ * @access  Private (Owner, Accountant)
+ */
+router.patch(
+  '/profile',
+  authenticate,
+  isRole(UserRole.OWNER, UserRole.ACCOUNTANT, UserRole.SUPER_ADMIN),
+  validateZod(UpdateBillingProfileDtoSchema),
+  billingController.createOrUpdateProfile.bind(billingController)
 );
 
 export default router;

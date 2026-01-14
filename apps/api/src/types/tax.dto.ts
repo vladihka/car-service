@@ -14,11 +14,24 @@ import mongoose from 'mongoose';
 export const CreateTaxDtoSchema = z.object({
   name: z.string().min(1, 'Название обязательно').trim(),
   rate: z.number().min(0, 'Ставка должна быть неотрицательной').max(100, 'Ставка не может превышать 100%'),
+  country: z.string().trim().optional(),
   isDefault: z.boolean().optional().default(false),
   description: z.string().trim().optional(),
 });
 
 export type CreateTaxDto = z.infer<typeof CreateTaxDtoSchema>;
+
+/**
+ * DTO для назначения налога по умолчанию
+ */
+export const SetDefaultTaxDtoSchema = z.object({
+  taxId: z.string().refine(
+    (val) => mongoose.Types.ObjectId.isValid(val),
+    'Неверный формат ID налога'
+  ),
+});
+
+export type SetDefaultTaxDto = z.infer<typeof SetDefaultTaxDtoSchema>;
 
 /**
  * DTO для обновления налога
@@ -37,6 +50,7 @@ export interface TaxResponse {
   organizationId: string;
   name: string;
   rate: number;
+  country?: string;
   isActive: boolean;
   isDefault: boolean;
   description?: string;

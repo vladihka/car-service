@@ -5,6 +5,7 @@
 
 import { Response, NextFunction, Request } from 'express';
 import billingService from '../services/billing.service';
+import billingProfileService from '../services/billing-profile.service';
 import stripeService from '../services/stripe.service';
 import { AuthRequest } from '../middlewares/auth.middleware';
 import { validateZod } from '../middlewares/validation.middleware';
@@ -18,6 +19,14 @@ import {
   CancelSubscriptionDto,
   StripeWebhookDto,
 } from '../types/billing.dto';
+import {
+  CreateBillingProfileDtoSchema,
+  UpdateBillingProfileDtoSchema,
+} from '../types/billing-profile.dto';
+import {
+  CreateBillingProfileDto,
+  UpdateBillingProfileDto,
+} from '../types/billing-profile.dto';
 
 /**
  * Контроллер биллинга
@@ -137,6 +146,53 @@ export class BillingController {
       res.status(200).json({
         success: true,
         received: true,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * POST /api/v1/billing/profile
+   * Создать или обновить биллинг-профиль
+   * Доступ: Owner, Accountant
+   */
+  async createOrUpdateProfile(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const data: CreateBillingProfileDto | UpdateBillingProfileDto = req.body;
+      
+      const profile = await billingProfileService.createOrUpdate(data, req.user);
+      
+      res.status(200).json({
+        success: true,
+        data: profile,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * GET /api/v1/billing/profile
+   * Получить биллинг-профиль организации
+   * Доступ: Owner, Manager, Accountant
+   */
+  async getProfile(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const profile = await billingProfileService.getProfile(req.user);
+      
+      if (!profile) {
+        res.status(200).json({
+          success: true,
+          data: null,
+          message: 'Биллинг-профиль не настроен',
+        });
+        return;
+      }
+      
+      res.status(200).json({
+        success: true,
+        data: profile,
       });
     } catch (error) {
       next(error);

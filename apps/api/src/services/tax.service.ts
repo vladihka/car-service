@@ -41,8 +41,12 @@ export class TaxService {
       throw new ForbiddenError('Требуется аутентификация');
     }
 
-    // Только Owner, Manager и SuperAdmin могут создавать налоги
-    if (user.role !== UserRole.OWNER && user.role !== UserRole.MANAGER && user.role !== UserRole.SUPER_ADMIN) {
+    // Только Owner, Accountant и SuperAdmin могут создавать налоги
+    if (
+      user.role !== UserRole.OWNER &&
+      user.role !== UserRole.ACCOUNTANT &&
+      user.role !== UserRole.SUPER_ADMIN
+    ) {
       throw new ForbiddenError('Недостаточно прав для создания налогов');
     }
 
@@ -67,6 +71,7 @@ export class TaxService {
       organizationId: new mongoose.Types.ObjectId(user.organizationId),
       name: data.name.trim(),
       rate: data.rate,
+      country: data.country?.trim().toUpperCase(),
       isActive: true,
       isDefault: data.isDefault || false,
       description: data.description?.trim(),
@@ -156,6 +161,7 @@ export class TaxService {
     // Обновить поля
     if (data.name !== undefined) tax.name = data.name.trim();
     if (data.rate !== undefined) tax.rate = data.rate;
+    if (data.country !== undefined) tax.country = data.country?.trim().toUpperCase();
     if (data.isDefault !== undefined) tax.isDefault = data.isDefault;
     if (data.description !== undefined) tax.description = data.description?.trim();
 
@@ -198,6 +204,59 @@ export class TaxService {
   }
 
   /**
+   * Назначить налог по умолчанию
+   */
+  async setDefaultTax(taxId: string, user: AuthRequest['user']): Promise<TaxResponse> {
+    if (!user) {
+      throw new ForbiddenError('Требуется аутентификация');
+    }
+
+    // Только Owner, Accountant и SuperAdmin могут назначать налог по умолчанию
+    if (
+      user.role !== UserRole.OWNER &&
+      user.role !== UserRole.ACCOUNTANT &&
+      user.role !== UserRole.SUPER_ADMIN
+    ) {
+      throw new ForbiddenError('Недостаточно прав для назначения налога по умолчанию');
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(taxId)) {
+      throw new NotFoundError('Налог не найден');
+    }
+
+    const filter = tenantFilter(user, { _id: new mongoose.Types.ObjectId(taxId) });
+    const tax = await Tax.findOne(filter);
+
+    if (!tax) {
+      throw new NotFoundError('Налог не найден');
+    }
+
+    if (!tax.isActive) {
+      throw new ForbiddenError('Нельзя назначить неактивный налог по умолчанию');
+    }
+
+    // Снять флаг isDefault с других налогов
+    await Tax.updateMany(
+      {
+        organizationId: tax.organizationId,
+        isDefault: true,
+        _id: { $ne: tax._id },
+      },
+      {
+        isDefault: false,
+      }
+    );
+
+    // Установить флаг isDefault для выбранного налога
+    tax.isDefault = true;
+    await tax.save();
+
+    logger.info(`Tax set as default: ${tax._id} by ${user.userId}`);
+
+    return this.mapToResponse(tax);
+  }
+
+  /**
    * Маппинг модели в DTO для ответа
    */
   private mapToResponse(tax: ITax): TaxResponse {
@@ -206,6 +265,7 @@ export class TaxService {
       organizationId: tax.organizationId.toString(),
       name: tax.name,
       rate: tax.rate,
+      country: tax.country,
       isActive: tax.isActive,
       isDefault: tax.isDefault,
       description: tax.description,

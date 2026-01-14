@@ -15,6 +15,9 @@ import partRoutes from './part.routes';
 import stockRoutes from './stock.routes';
 import purchaseOrderRoutes from './purchase-order.routes';
 import clientRoutes from './client.routes';
+import carRoutes from './car.routes';
+import supplierRoutes from './supplier.routes';
+import taxRoutes from './tax.routes';
 import { healthCheck } from '../controllers/health.controller';
 
 const router = Router();
@@ -69,5 +72,14 @@ router.use('/purchase-orders', purchaseOrderRoutes);
 
 // Client routes
 router.use('/clients', clientRoutes);
+
+// Car routes
+router.use('/cars', carRoutes);
+
+// Supplier routes
+router.use('/suppliers', supplierRoutes);
+
+// Tax routes
+router.use('/taxes', taxRoutes);
 
 export default router;

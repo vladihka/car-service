@@ -14,6 +14,7 @@ import reportRoutes from './report.routes';
 import partRoutes from './part.routes';
 import stockRoutes from './stock.routes';
 import purchaseOrderRoutes from './purchase-order.routes';
+import clientRoutes from './client.routes';
 import { healthCheck } from '../controllers/health.controller';
 
 const router = Router();
@@ -65,5 +66,8 @@ router.use('/stock', stockRoutes);
 
 // Purchase Order routes
 router.use('/purchase-orders', purchaseOrderRoutes);
+
+// Client routes
+router.use('/clients', clientRoutes);
 
 export default router;

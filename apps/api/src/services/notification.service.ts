@@ -378,6 +378,32 @@ export class NotificationService {
   }
 
   /**
+   * Отметить все уведомления пользователя как прочитанные
+   */
+  async markAllAsRead(user: AuthRequest['user']): Promise<{ count: number }> {
+    if (!user) {
+      throw new ForbiddenError('Требуется аутентификация');
+    }
+
+    const filter: any = { userId: new mongoose.Types.ObjectId(user.userId) };
+
+    // Tenant фильтрация
+    if (user.organizationId) {
+      filter.organizationId = new mongoose.Types.ObjectId(user.organizationId);
+    }
+
+    // Обновить все непрочитанные уведомления
+    const result = await Notification.updateMany(
+      { ...filter, readAt: { $exists: false } },
+      { $set: { readAt: new Date() } }
+    );
+
+    logger.info(`Marked ${result.modifiedCount} notifications as read for user ${user.userId}`);
+
+    return { count: result.modifiedCount || 0 };
+  }
+
+  /**
    * Создать уведомление
    * Manager/Owner может создавать уведомления для пользователей своей организации
    * 
@@ -498,6 +524,9 @@ export class NotificationService {
       [NotificationType.APPOINTMENT_CANCELLED]: 'Ваша запись отменена.',
       [NotificationType.MECHANIC_ASSIGNED]: 'Вам назначен механик для выполнения заказа.',
       [NotificationType.WORK_ORDER_STATUS_CHANGED]: 'Статус вашего заказа изменен.',
+      [NotificationType.WORK_STARTED]: 'Работа над вашим заказом начата.',
+      [NotificationType.WORK_FINISHED]: 'Работа над вашим заказом завершена.',
+      [NotificationType.PAYMENT_CREATED]: 'Платеж по вашему счету создан.',
       [NotificationType.VEHICLE_READY]: 'Ваш автомобиль готов к выдаче.',
       [NotificationType.APPOINTMENT_REMINDER]: 'Напоминание: у вас запись через несколько часов.',
       [NotificationType.WORK_ORDER_OVERDUE]: 'Ваш заказ просрочен.',
@@ -520,6 +549,7 @@ export class NotificationService {
       title: notification.title,
       message: notification.message,
       data: notification.data,
+      isRead: !!notification.readAt,
       readAt: notification.readAt,
       sentAt: notification.sentAt,
       deliveredAt: notification.deliveredAt,
@@ -528,6 +558,41 @@ export class NotificationService {
       createdAt: notification.createdAt,
       updatedAt: notification.updatedAt,
     };
+  }
+
+  /**
+   * Создать уведомление программно (для системных событий)
+   * Внутренний метод для интеграции с другими сервисами
+   */
+  async createNotification(data: {
+    userId: string;
+    organizationId?: string;
+    branchId?: string;
+    type: NotificationType;
+    title: string;
+    message: string;
+    data?: { [key: string]: any };
+  }): Promise<void> {
+    const notification = new Notification({
+      organizationId: data.organizationId ? new mongoose.Types.ObjectId(data.organizationId) : undefined,
+      branchId: data.branchId ? new mongoose.Types.ObjectId(data.branchId) : undefined,
+      userId: new mongoose.Types.ObjectId(data.userId),
+      type: data.type,
+      channel: NotificationChannel.IN_APP,
+      status: NotificationStatus.PENDING,
+      title: data.title,
+      message: data.message,
+      data: data.data || {},
+    });
+
+    await notification.save();
+
+    logger.info(`System notification created: ${notification._id} for user ${data.userId}`);
+
+    // Отправить уведомление асинхронно
+    this.sendNotification(notification).catch(error => {
+      logger.error(`Error sending notification ${notification._id}:`, error);
+    });
   }
 }
 

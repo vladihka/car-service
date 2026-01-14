@@ -38,6 +38,15 @@ export const CreateNotificationDtoSchema = z.object({
 export type CreateNotificationDto = z.infer<typeof CreateNotificationDtoSchema>;
 
 /**
+ * DTO для пометки уведомления как прочитанного
+ */
+export const MarkNotificationReadDtoSchema = z.object({
+  id: z.string().min(1, 'ID уведомления обязателен'),
+});
+
+export type MarkNotificationReadDto = z.infer<typeof MarkNotificationReadDtoSchema>;
+
+/**
  * DTO для создания тестового уведомления
  */
 export const CreateTestNotificationDtoSchema = z.object({

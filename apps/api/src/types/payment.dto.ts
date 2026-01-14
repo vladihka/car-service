@@ -5,7 +5,7 @@
 
 import { z } from 'zod';
 import mongoose from 'mongoose';
-import { PaymentMethod, PaymentStatus } from './index';
+import { PaymentMethod, PaymentStatus, PaymentProvider } from './index';
 
 // ==================== Request DTOs ====================
 
@@ -25,6 +25,7 @@ export const CreatePaymentDtoSchema = z.object({
   amount: z.number().min(0.01, 'Сумма должна быть больше нуля'),
   currency: z.string().length(3, 'Валюта должна быть в формате ISO 4217 (3 символа)').default('USD'),
   method: z.nativeEnum(PaymentMethod),
+  provider: z.nativeEnum(PaymentProvider).optional(),
   transactionId: z.string().trim().optional(),
   notes: z.string().trim().optional(),
 });
@@ -67,6 +68,7 @@ export interface PaymentResponse {
   amount: number;
   currency: string;
   method: PaymentMethod;
+  provider?: PaymentProvider;
   status: PaymentStatus;
   transactionId?: string;
   paidAt?: Date;

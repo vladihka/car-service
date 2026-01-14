@@ -51,6 +51,12 @@ export enum PaymentMethod {
   ONLINE = 'online',
 }
 
+export enum PaymentProvider {
+  STRIPE = 'stripe',
+  LIQPAY = 'liqpay',
+  PAYPAL = 'paypal',
+}
+
 export enum SubscriptionStatus {
   TRIAL = 'trial',
   ACTIVE = 'active',
@@ -95,6 +101,9 @@ export enum NotificationType {
   APPOINTMENT_CANCELLED = 'appointment_cancelled',
   MECHANIC_ASSIGNED = 'mechanic_assigned',
   WORK_ORDER_STATUS_CHANGED = 'work_order_status_changed',
+  WORK_STARTED = 'work_started',
+  WORK_FINISHED = 'work_finished',
+  PAYMENT_CREATED = 'payment_created',
   VEHICLE_READY = 'vehicle_ready',
   APPOINTMENT_REMINDER = 'appointment_reminder',
   WORK_ORDER_OVERDUE = 'work_order_overdue',

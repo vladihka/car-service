@@ -34,6 +34,40 @@ export const UpdatePartDtoSchema = CreatePartDtoSchema.partial();
 
 export type UpdatePartDto = z.infer<typeof UpdatePartDtoSchema>;
 
+/**
+ * DTO для корректировки остатка
+ */
+export const AdjustStockDtoSchema = z.object({
+  quantity: z.number().int().refine((val) => val !== 0, 'Количество не может быть нулевым'),
+  reason: z.string().trim().optional(),
+});
+
+export type AdjustStockDto = z.infer<typeof AdjustStockDtoSchema>;
+
+/**
+ * DTO для резервирования запчастей под заказ
+ */
+export const ReservePartsDtoSchema = z.object({
+  parts: z.array(z.object({
+    partId: z.string().refine(
+      (val) => mongoose.Types.ObjectId.isValid(val),
+      'Неверный формат ID запчасти'
+    ),
+    quantity: z.number().int().min(1, 'Количество должно быть больше нуля'),
+  })).min(1, 'Необходимо указать хотя бы одну запчасть'),
+});
+
+export type ReservePartsDto = z.infer<typeof ReservePartsDtoSchema>;
+
+/**
+ * DTO для освобождения резерва
+ */
+export const ReleasePartsDtoSchema = z.object({
+  reason: z.string().trim().optional(),
+});
+
+export type ReleasePartsDto = z.infer<typeof ReleasePartsDtoSchema>;
+
 // ==================== Response DTOs ====================
 
 /**

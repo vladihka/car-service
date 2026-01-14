@@ -9,7 +9,7 @@ import { AuthRequest } from '../middlewares/auth.middleware';
 import { combinedFilter, tenantFilter } from '../middlewares/tenant.middleware';
 import { NotFoundError, ForbiddenError, BadRequestError } from '../utils/errors';
 import { CreatePaymentDto, UpdatePaymentStatusDto, RefundPaymentDto, PaymentResponse } from '../types/payment.dto';
-import { PaymentStatus, InvoiceStatus } from '../types';
+import { PaymentStatus, PaymentProvider, InvoiceStatus } from '../types';
 import { UserRole } from '../types';
 import mongoose from 'mongoose';
 import logger from '../utils/logger';
@@ -379,6 +379,7 @@ export class PaymentService {
       amount: payment.amount,
       currency: payment.currency || 'USD',
       method: payment.method,
+      provider: payment.provider,
       status: payment.status,
       transactionId: payment.transactionId,
       paidAt: payment.paidAt,

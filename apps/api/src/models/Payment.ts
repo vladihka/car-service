@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import { PaymentStatus, PaymentMethod } from '../types';
+import { PaymentStatus, PaymentMethod, PaymentProvider } from '../types';
 
 export interface IPayment extends Document {
   organizationId: mongoose.Types.ObjectId;
@@ -10,6 +10,7 @@ export interface IPayment extends Document {
   amount: number;
   currency: string;
   method: PaymentMethod;
+  provider?: PaymentProvider;
   status: PaymentStatus;
   transactionId?: string;
   paidAt?: Date;
@@ -55,6 +56,11 @@ const PaymentSchema = new Schema<IPayment>(
       type: String,
       enum: Object.values(PaymentMethod),
       required: true,
+      index: true,
+    },
+    provider: {
+      type: String,
+      enum: Object.values(PaymentProvider),
       index: true,
     },
     status: {

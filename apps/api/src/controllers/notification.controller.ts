@@ -89,6 +89,23 @@ export class NotificationController {
   }
   
   /**
+   * PATCH /api/v1/notifications/read-all
+   * Отметить все уведомления как прочитанные
+   */
+  async markAllAsRead(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const result = await notificationService.markAllAsRead(req.user);
+      
+      res.status(200).json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+  
+  /**
    * POST /api/v1/notifications
    * Создать уведомление
    * Доступ: Manager, Owner

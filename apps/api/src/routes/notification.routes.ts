@@ -46,6 +46,17 @@ router.patch(
 );
 
 /**
+ * @route   PATCH /api/v1/notifications/read-all
+ * @desc    Отметить все уведомления как прочитанные
+ * @access  Private
+ */
+router.patch(
+  '/read-all',
+  authenticate,
+  notificationController.markAllAsRead.bind(notificationController)
+);
+
+/**
  * @route   POST /api/v1/notifications
  * @desc    Создать уведомление
  * @access  Private (Manager, Owner)

@@ -109,9 +109,12 @@ export enum NotificationType {
   WORK_STARTED = 'work_started',
   WORK_FINISHED = 'work_finished',
   PAYMENT_CREATED = 'payment_created',
+  PAYMENT_RECEIVED = 'payment_received',
+  INVOICE_CREATED = 'invoice_created',
   VEHICLE_READY = 'vehicle_ready',
   APPOINTMENT_REMINDER = 'appointment_reminder',
   WORK_ORDER_OVERDUE = 'work_order_overdue',
+  PASSWORD_RESET = 'password_reset',
 }
 
 /**

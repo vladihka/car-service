@@ -9,6 +9,7 @@ import invoiceRoutes from './invoice.routes';
 import paymentRoutes from './payment.routes';
 import analyticsRoutes from './analytics.routes';
 import notificationRoutes from './notification.routes';
+import pushRoutes from './push.routes';
 import billingRoutes from './billing.routes';
 import reportRoutes from './report.routes';
 import partRoutes from './part.routes';
@@ -54,6 +55,9 @@ router.use('/analytics', analyticsRoutes);
 
 // Notification routes
 router.use('/notifications', notificationRoutes);
+
+// Push routes
+router.use('/push', pushRoutes);
 
 // Billing routes
 router.use('/billing', billingRoutes);

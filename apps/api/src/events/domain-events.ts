@@ -144,6 +144,33 @@ export class PaymentFailedEvent extends DomainEventBase {
 }
 
 /**
+ * Событие: Счет создан
+ */
+export class InvoiceCreatedEvent extends DomainEventBase {
+  constructor(userId: string, data: { invoiceId: string; invoiceNumber: string; totalAmount: number; currency: string; dueDate?: Date; [key: string]: any }, organizationId?: string, branchId?: string) {
+    super(NotificationType.INVOICE_CREATED, userId, data, organizationId, branchId);
+  }
+}
+
+/**
+ * Событие: Платеж получен
+ */
+export class PaymentReceivedEvent extends DomainEventBase {
+  constructor(userId: string, data: { paymentId: string; invoiceId: string; invoiceNumber: string; amount: number; currency: string; paymentMethod: string; paymentDate: Date; [key: string]: any }, organizationId?: string, branchId?: string) {
+    super(NotificationType.PAYMENT_RECEIVED, userId, data, organizationId, branchId);
+  }
+}
+
+/**
+ * Событие: Запрос на сброс пароля
+ */
+export class PasswordResetRequestEvent extends DomainEventBase {
+  constructor(userId: string, data: { resetToken: string; resetUrl: string; expirationHours: number; [key: string]: any }, organizationId?: string, branchId?: string) {
+    super(NotificationType.PASSWORD_RESET, userId, data, organizationId, branchId);
+  }
+}
+
+/**
  * Event Bus (подготовка под очередь задач)
  * В будущем можно интегрировать BullMQ, RabbitMQ, etc.
  */

@@ -1,10 +1,12 @@
 /**
  * Email провайдер для уведомлений
- * Подготовка под SendGrid, SES, etc.
+ * Production-ready реализация на базе Nodemailer
  */
 
 import { NotificationType } from '../../types';
 import logger from '../../utils/logger';
+import { NodemailerProvider, EmailParams } from './nodemailer.provider';
+import config from '../../config/env';
 
 export interface EmailProvider {
   send(params: {
@@ -16,12 +18,37 @@ export interface EmailProvider {
 }
 
 /**
- * Базовый email провайдер (mock для разработки)
- * В production заменяется на SendGrid, SES, etc.
+ * Production-ready Email Provider на базе Nodemailer
+ * Использует SMTP конфигурацию из environment variables
+ */
+export class ProductionEmailProvider implements EmailProvider {
+  private nodemailerProvider: NodemailerProvider;
+
+  constructor() {
+    this.nodemailerProvider = new NodemailerProvider();
+  }
+
+  async send(params: { to: string; subject: string; html: string; text: string }): Promise<{ messageId: string }> {
+    const emailParams: EmailParams = {
+      to: params.to,
+      subject: params.subject,
+      html: params.html,
+      text: params.text,
+    };
+
+    const result = await this.nodemailerProvider.send(emailParams);
+    
+    return {
+      messageId: result.messageId,
+    };
+  }
+}
+
+/**
+ * Mock email провайдер (для тестов и fallback)
  */
 export class MockEmailProvider implements EmailProvider {
   async send(params: { to: string; subject: string; html: string; text: string }): Promise<{ messageId: string }> {
-    // Mock реализация - в production заменить на реальный провайдер
     logger.info(`[MockEmailProvider] Sending email to ${params.to}`, {
       subject: params.subject,
     });

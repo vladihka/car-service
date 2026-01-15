@@ -39,6 +39,42 @@ export const config = {
   
   webUrl: process.env.WEB_URL || 'http://localhost:3002',
   adminUrl: process.env.ADMIN_URL || 'http://localhost:3003',
+
+  email: {
+    enabled: process.env.EMAIL_ENABLED === 'true',
+    sandbox: process.env.EMAIL_SANDBOX === 'true' || process.env.NODE_ENV === 'development',
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    port: parseInt(process.env.SMTP_PORT || '587', 10),
+    secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
+    user: process.env.SMTP_USER || '',
+    pass: process.env.SMTP_PASS || '',
+    from: process.env.SMTP_FROM || process.env.EMAIL_FROM || 'noreply@car-service.com',
+    retryAttempts: parseInt(process.env.EMAIL_RETRY_ATTEMPTS || '3', 10),
+    retryDelayMs: parseInt(process.env.EMAIL_RETRY_DELAY_MS || '1000', 10),
+  },
+
+  push: {
+    enabled: process.env.PUSH_ENABLED === 'true',
+    vapidPublicKey: process.env.VAPID_PUBLIC_KEY || '',
+    vapidPrivateKey: process.env.VAPID_PRIVATE_KEY || '',
+    vapidSubject: process.env.VAPID_SUBJECT || process.env.API_URL || 'mailto:noreply@car-service.com',
+    maxFailureCount: parseInt(process.env.PUSH_MAX_FAILURE_COUNT || '5', 10),
+    retryAttempts: parseInt(process.env.PUSH_RETRY_ATTEMPTS || '3', 10),
+  },
 };
+
+// Валидация конфигурации email при запуске
+if (config.email.enabled && !config.email.sandbox) {
+  if (!config.email.host || !config.email.user || !config.email.pass) {
+    throw new Error('Email configuration is incomplete. Please set SMTP_HOST, SMTP_USER, and SMTP_PASS environment variables.');
+  }
+}
+
+// Валидация конфигурации push при запуске
+if (config.push.enabled) {
+  if (!config.push.vapidPublicKey || !config.push.vapidPrivateKey) {
+    throw new Error('Push configuration is incomplete. Please set VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY environment variables. Generate keys using: npx web-push generate-vapid-keys');
+  }
+}
 
 export default config;

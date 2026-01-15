@@ -11,6 +11,10 @@
     "dev": "npm run dev --workspaces",
     "build": "npm run build --workspaces",
     "lint": "npm run lint --workspaces",
+    "lint:fix": "npm run lint:fix --workspaces",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,css,md}\"",
+    "prepare": "husky install",
     "seed": "cd apps/api && npm run seed"
   },
   "devDependencies": {

@@ -84,6 +84,27 @@ export class StripeService {
   }
 
   /**
+   * Обновить подписку в Stripe (смена плана)
+   */
+  async updateSubscription(subscriptionId: string, params: { priceId: string }): Promise<StripeSubscription> {
+    // Mock реализация
+    logger.info('[MockStripe] Updating subscription', { subscriptionId, priceId: params.priceId });
+    
+    const now = new Date();
+    const periodEnd = new Date(now);
+    periodEnd.setDate(periodEnd.getDate() + 30); // 30 дней период
+    
+    return {
+      id: subscriptionId,
+      customerId: 'cus_mock',
+      status: 'active',
+      currentPeriodStart: now,
+      currentPeriodEnd: periodEnd,
+      cancelAtPeriodEnd: false,
+    };
+  }
+
+  /**
    * Отменить подписку в Stripe
    */
   async cancelSubscription(subscriptionId: string, cancelAtPeriodEnd: boolean = true): Promise<StripeSubscription> {

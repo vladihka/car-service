@@ -73,6 +73,26 @@ export class BillingController {
   }
   
   /**
+   * PATCH /api/v1/billing/subscription/change-plan
+   * Сменить план подписки
+   * Доступ: Owner
+   */
+  async changePlan(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const data: { planId: string } = req.body;
+      
+      const subscription = await billingService.changePlan(data, req.user);
+      
+      res.status(200).json({
+        success: true,
+        data: subscription,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
    * GET /api/v1/billing/subscription
    * Получить подписку организации
    * Доступ: Owner, Manager

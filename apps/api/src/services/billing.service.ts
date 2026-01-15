@@ -254,6 +254,50 @@ export class BillingService {
   }
 
   /**
+   * Сменить план подписки
+   */
+  async changePlan(data: { planId: string }, user: AuthRequest['user']): Promise<SubscriptionResponse> {
+    if (!user) {
+      throw new ForbiddenError('Требуется аутентификация');
+    }
+
+    // Только Owner может менять план
+    if (user.role !== UserRole.OWNER && user.role !== UserRole.SUPER_ADMIN) {
+      throw new ForbiddenError('Только владелец организации может менять план подписки');
+    }
+
+    if (!user.organizationId) {
+      throw new ForbiddenError('Требуется организация');
+    }
+
+    // Проверить, что тариф существует и активен
+    const plan = await Plan.findOne({
+      _id: new mongoose.Types.ObjectId(data.planId),
+      isActive: true,
+    });
+
+    if (!plan) {
+      throw new NotFoundError('Тариф не найден или неактивен');
+    }
+
+    // Найти существующую подписку
+    const subscription = await Subscription.findOne({
+      organizationId: new mongoose.Types.ObjectId(user.organizationId),
+    });
+
+    if (!subscription) {
+      throw new NotFoundError('Подписка не найдена');
+    }
+
+    if (subscription.status === SubscriptionStatus.CANCELLED) {
+      throw new BadRequestError('Нельзя изменить план отмененной подписки');
+    }
+
+    // Обновить подписку
+    return this.updateSubscription(subscription, plan, user);
+  }
+
+  /**
    * Получить подписку организации
    */
   async getSubscription(user: AuthRequest['user']): Promise<SubscriptionResponse | null> {

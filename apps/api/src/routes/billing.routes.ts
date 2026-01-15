@@ -3,6 +3,7 @@
  */
 
 import { Router } from 'express';
+import { z } from 'zod';
 import billingController from '../controllers/billing.controller';
 import { authenticate } from '../middlewares/auth.middleware';
 import { validateZod } from '../middlewares/validation.middleware';
@@ -37,6 +38,21 @@ router.post(
   isRole(UserRole.OWNER, UserRole.SUPER_ADMIN),
   validateZod(CancelSubscriptionDtoSchema),
   billingController.cancel.bind(billingController)
+);
+
+/**
+ * @route   PATCH /api/v1/billing/subscription/change-plan
+ * @desc    Сменить план подписки
+ * @access  Private (Owner)
+ */
+router.patch(
+  '/subscription/change-plan',
+  authenticate,
+  isRole(UserRole.OWNER, UserRole.SUPER_ADMIN),
+  validateZod(z.object({
+    planId: z.string().min(1, 'ID тарифа обязателен'),
+  })),
+  billingController.changePlan.bind(billingController)
 );
 
 /**

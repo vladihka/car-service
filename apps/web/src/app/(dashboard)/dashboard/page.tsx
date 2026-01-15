@@ -1,118 +1,91 @@
+/**
+ * Dashboard Page
+ * Main dashboard with metrics and overview
+ */
+
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React from 'react';
+import { DashboardLayout } from '../../../components/layouts/DashboardLayout';
+import { MetricCard } from '../../../components/dashboard/MetricCard';
+import { useAuth } from '../../../lib/auth/auth-context';
+import { HomeIcon, CalendarIcon, ClipboardIcon, FileTextIcon } from '../../../components/icons';
 
 export default function DashboardPage() {
-  const router = useRouter();
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  const navItems = user ? getNavigationItems(user.role, user.permissions) : [];
 
-  useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    if (!token) {
-      router.push('/login');
-      return;
-    }
-
-    fetchUser();
-  }, [router]);
-
-  const fetchUser = async () => {
-    try {
-      const token = localStorage.getItem('accessToken');
-      if (!token) {
-        router.push('/login');
-        return;
-      }
-
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const response = await fetch(`${apiUrl}/api/v1/auth/me`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      // Проверить Content-Type перед парсингом JSON
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        const text = await response.text();
-        throw new Error(`Server error: ${response.status} ${response.statusText}`);
-      }
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.error?.message || 'Failed to fetch user');
-      }
-
-      const data = await response.json();
-      setUser(data.data);
-    } catch (error) {
-      console.error('Error fetching user:', error);
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      router.push('/login');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    router.push('/login');
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
+  // Mock metrics - replace with real API calls
+  const metrics = [
+    {
+      title: 'Appointments Today',
+      value: '12',
+      subtitle: '3 upcoming',
+      trend: { value: 12, isPositive: true, label: 'vs yesterday' },
+      icon: <CalendarIcon />,
+      color: 'primary' as const,
+    },
+    {
+      title: 'Active Work Orders',
+      value: '8',
+      subtitle: '2 in progress',
+      trend: { value: 5, isPositive: false, label: 'vs last week' },
+      icon: <ClipboardIcon />,
+      color: 'warning' as const,
+    },
+    {
+      title: 'Pending Invoices',
+      value: '$4,250',
+      subtitle: '5 invoices',
+      trend: { value: 8, isPositive: true, label: 'vs last month' },
+      icon: <FileTextIcon />,
+      color: 'info' as const,
+    },
+    {
+      title: 'Total Revenue',
+      value: '$28,500',
+      subtitle: 'This month',
+      trend: { value: 15, isPositive: true, label: 'vs last month' },
+      icon: <FileTextIcon />,
+      color: 'success' as const,
+    },
+  ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <h1 className="text-xl font-semibold text-gray-900">Car Service</h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-700">
-                {user?.firstName} {user?.lastName}
-              </span>
-              <button
-                onClick={handleLogout}
-                className="px-4 py-2 text-sm text-white bg-primary-600 rounded-md hover:bg-primary-700"
-              >
-                Logout
-              </button>
-            </div>
-          </div>
+    <DashboardLayout>
+      <div className="space-y-6">
+        {/* Header */}
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+          <p className="mt-1 text-sm text-gray-600">
+            Welcome back, {user?.firstName}! Here's what's happening today.
+          </p>
         </div>
-      </nav>
 
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          <div className="border-4 border-dashed border-gray-200 rounded-lg h-96 p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Welcome to your Dashboard</h2>
-            <p className="text-gray-600 mb-4">
-              Your client portal is ready. Here you will be able to:
-            </p>
-            <ul className="list-disc list-inside space-y-2 text-gray-600">
-              <li>View your vehicles</li>
-              <li>Track service appointments</li>
-              <li>View service history</li>
-              <li>Manage your profile</li>
-            </ul>
+        {/* Metrics Grid */}
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {metrics.map((metric, index) => (
+            <MetricCard key={index} {...metric} />
+          ))}
+        </div>
+
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+            <div className="space-y-3">
+              {/* Add quick action buttons here */}
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h2>
+            <div className="space-y-3">
+              {/* Add recent activity list here */}
+            </div>
           </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }

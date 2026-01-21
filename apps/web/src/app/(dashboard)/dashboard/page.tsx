@@ -9,11 +9,10 @@ import React from 'react';
 import { DashboardLayout } from '../../../components/layouts/DashboardLayout';
 import { MetricCard } from '../../../components/dashboard/MetricCard';
 import { useAuth } from '../../../lib/auth/auth-context';
-import { HomeIcon, CalendarIcon, ClipboardIcon, FileTextIcon } from '../../../components/icons';
+import { CalendarIcon, ClipboardIcon, FileTextIcon } from '../../../components/icons';
 
 export default function DashboardPage() {
   const { user } = useAuth();
-  const navItems = user ? getNavigationItems(user.role, user.permissions) : [];
 
   // Mock metrics - replace with real API calls
   const metrics = [

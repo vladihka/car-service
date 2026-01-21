@@ -3,6 +3,8 @@
  * Reusable table component with sorting and pagination support
  */
 
+'use client';
+
 import React from 'react';
 import clsx from 'clsx';
 

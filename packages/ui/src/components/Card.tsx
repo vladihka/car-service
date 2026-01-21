@@ -3,6 +3,8 @@
  * Reusable card container component
  */
 
+'use client';
+
 import React from 'react';
 import clsx from 'clsx';
 

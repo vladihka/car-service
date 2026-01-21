@@ -2,8 +2,13 @@
   "name": "@car-service/shared",
   "version": "1.0.0",
   "description": "Shared types and utilities for car-service platform",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./types": "./src/types/index.ts",
+    "./lib/api-client": "./src/lib/api-client.ts"
+  },
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch"

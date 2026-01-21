@@ -5,20 +5,13 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '../../lib/auth/auth-context';
-import { UserRole } from '@car-service/shared';
+import { getNavigationItems, type NavItem } from '../../lib/navigation';
+import { getIcon } from '../../components/icons';
 import clsx from 'clsx';
-
-interface NavItem {
-  label: string;
-  href: string;
-  icon?: React.ReactNode;
-  roles?: UserRole[];
-  permission?: string;
-}
 
 interface DashboardLayoutProps {
   children: React.ReactNode;

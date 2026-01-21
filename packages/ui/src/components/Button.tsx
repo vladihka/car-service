@@ -3,6 +3,8 @@
  * Reusable button component with variants and sizes
  */
 
+'use client';
+
 import React from 'react';
 import clsx from 'clsx';
 

@@ -9,7 +9,7 @@ import { AuthResponse } from '../types';
 
 export class ApiClient {
   private client: AxiosInstance;
-  private baseURL: string;
+  public readonly baseURL: string;
   private refreshTokenPromise: Promise<string> | null = null;
 
   constructor(baseURL: string) {
